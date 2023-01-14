@@ -1,0 +1,144 @@
+baseURL = "https://flyginger.github.io/"
+title = "PowerBlogs"
+paginate = 10
+theme = "PaperMod"
+defaultContentLanguage = "zh"
+enableEmoji = true
+enableRobotsTXT = true
+buildDrafts = false
+buildFuture = false
+buildExpired = false
+# googleAnalytics = "UA-123-45"
+
+# Read: https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
+pygmentsUseClasses = true
+[markup.highlight]
+noClasses = false
+# anchorLineNos = true
+# codeFences = true
+# guessSyntax = true
+# lineNos = true
+# style = "monokai"
+
+[minify]
+disableXML = true
+minifyOutput = true
+
+[params]
+env = "production"
+title = "PowerBlogs"
+description = "zenk's blog"
+keywords = ["Blog", "PaperMod"]
+author = "zenk"
+math = true
+# author = [ "Me", "You" ] # multiple authors
+# images = ["<link or path of image for opengraph, twitter-cards>"]
+DateFormat = "2006-01-02"
+defaultTheme = "auto"
+disableThemeToggle = false
+ShowReadingTime = true
+ShowShareButtons = false
+ShowPostNavLinks = false
+ShowBreadCrumbs = true
+ShowCodeCopyButtons = true
+ShowWordCount = true
+ShowRssButtonInSectionTermList = true
+UseHugoToc = true
+disableSpecial1stPost = true
+disableScrollToTop = false
+comments = false
+hidemeta = false
+hideSummary = false
+showtoc = true
+tocopen = false
+
+[params.assets]
+# disableHLJS = true # to disable highlight.js
+# disableFingerprinting = true
+favicon = "logo.svg"
+# favicon16x16 = "<link / abs url>"
+# favicon32x32 = "<link / abs url>"
+# apple_touch_icon = "<link / abs url>"
+# safari_pinned_tab = "<link / abs url>"
+
+# [params.label]
+# text = "Home"
+# icon = "/apple-touch-icon.png"
+# iconHeight = 35
+
+# profile-mode
+# [params.profileMode]
+# enabled = false
+# title = "ExampleSite"
+# subtitle = "This is subtitle"
+# imageUrl = "<img location>"
+# imageWidth = 120
+# imageHeight = 120
+# imageTitle = "my image"
+
+# [[params.profileMode.buttons]]
+# name = "Posts"
+# url = "posts"
+
+# [[params.profileMode.buttons]]
+# name = "Tags"
+# url = "tags"
+
+# home-info mode
+[params.homeInfoParams]
+Title = "欢迎光临 🥱"
+Content = "请随便看看"
+
+# [[params.socialIcons]]
+# name = "twitter"
+# url = "https://twitter.com/"
+
+# [[params.socialIcons]]
+# name = "stackoverflow"
+# url = "https://stackoverflow.com"
+
+[[params.socialIcons]]
+name = "github"
+url = "https://github.com/flyginger"
+
+# [params.analytics.google]
+# SiteVerificationTag = "XYZabc"
+
+# [params.analytics.bing]
+# SiteVerificationTag = "XYZabc"
+
+# [params.analytics.yandex]
+# SiteVerificationTag = "XYZabc"
+
+[params.cover]
+hidden = true         # hide everywhere but not in structured data
+hiddenInList = true   # hide on list pages and home
+hiddenInSingle = true # hide on single page
+
+# [params.editPost]
+# URL = "https://github.com/<path_to_repo>/content"
+# Text = "Suggest Changes"
+# appendFilePath = true # to append file path to Edit link
+
+# for search
+# https://fusejs.io/api/options.html
+# [params.fuseOpts]
+# isCaseSensitive = false
+# shouldSort = true
+# location = 0
+# distance = 1_000
+# threshold = 0.4
+# minMatchCharLength = 0
+# keys = ["title", "permalink", "summary", "content"]
+
+[[menu.main]]
+identifier = "categories"
+name = "分类"
+url = "/categories/"
+weight = 10
+
+[[menu.main]]
+identifier = "tags"
+name = "标签"
+url = "/tags/"
+weight = 20
