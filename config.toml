@@ -1,4 +1,4 @@
-baseURL = "https://flyginger.github.io/"
+baseURL = "https://blog.zenk.top/"
 title = "PowerBlogs"
 paginate = 10
 theme = "PaperMod"
