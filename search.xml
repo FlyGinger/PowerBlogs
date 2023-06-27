@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>FFmpeg 命令</title>
+    <url>/2022/12/01/FFmpeg%20%E5%91%BD%E4%BB%A4/</url>
+    <content><![CDATA[<h2 id="查看硬件支持">查看硬件支持</h2>
+<p>使用如下命令可以查看硬件支持、编码器、解码器等。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ffmpeg -hwaccels</span><br><span class="line">ffmpeg -encoders</span><br><span class="line">ffmpeg -decoders</span><br></pre></td></tr></table></figure>
+<p>使用如下命令可以查看单个编码器的参数。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ffmpeg -h encoder=libx265</span><br></pre></td></tr></table></figure>
+<h2 id="裁切黑边">裁切黑边</h2>
+<p>可以使用<code>cropdetect</code>自动检测黑边，用<code>crop</code>进行黑边裁切。</p>
+<p><code>cropdetect</code>后的数值是灵敏度，如果黑边不是纯黑，可以适当提高数值。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ffplay -i xxx.mp4 -an -vf cropdetect=20</span><br><span class="line">ffmpeg -i xxx.mp4 -vf crop=xxx</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>解决方案</category>
+      </categories>
+      <tags>
+        <tag>FFmpeg</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>利用 TTRSS 搭建 RSS 服务器</title>
+    <url>/2022/04/08/%E5%88%A9%E7%94%A8%20TTRSS%20%E6%90%AD%E5%BB%BA%20RSS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
+    <content><![CDATA[<p>本文主要介绍白嫖AWS的免费云服务器，利用<a
+href="https://tt-rss.org">Tiny Tiny
+RSS</a>来搭建一个RSS服务器的过程。以前我都是使用Inoreader的，但是免费版刷新太慢了，六小时都不给我刷新一次。</p>
+<p>现在开始。创建AWS账号、创建实例的过程就跳过了，我选的系统是Ubuntu
+20版本，然后就是免费选项选到最后。创建实例之前一定要注意当前的区域，最好在距离近的区域创建实例，这样延迟低一些。</p>
+<p>然后需要进行安全组设置。默认只打开了SSH用到的22端口，这肯定是不够的。需要打开HTTP的80端口和HTTPS的443端口。另外，还需要打开181端口，协议用TCP。</p>
+<p>接下来，就可以用SSH连接云服务器了。在创建实例的时候，还会让你顺带创建密钥，可以得到一个<code>pem</code>文件。下载到这个文件之后，要先对它执行一个命令。这个命令可以修改它的读写执行的权限（改到最少），如果不改的话，SSH的时候会提示权限太<code>open</code>，不让你连接。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">chmod</span> 400 /path/to/pem_file</span><br></pre></td></tr></table></figure>
+<p>接下来就可以SSH了。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh -i /path/to/pem_file user_name@server_address</span><br></pre></td></tr></table></figure>
+<p><code>user_name</code>和<code>server_address</code>可以在AWS点击“连接”按钮，直接得到。如果你没改过，那么它提供的默认提示就是对的。</p>
+<p>进入到系统之后，直接先更新一下<code>apt</code> 。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt upgrade</span><br></pre></td></tr></table></figure>
+<p>然后，安装Docker。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -fsSL get.docker.com -o get-docker.sh</span><br><span class="line">sudo sh get-docker.sh</span><br></pre></td></tr></table></figure>
+<p>当然，有强迫症的话，安装完了可以<code>rmget-docker.sh</code>。然后，安装Docker
+Compose。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo curl -L <span class="string">&quot;https://github.com/docker/compose/releases/download/1.29.2/docker-compose-<span class="subst">$(uname -s)</span>-<span class="subst">$(uname -m)</span>&quot;</span> -o /usr/local/bin/docker-compose</span><br><span class="line">sudo <span class="built_in">chmod</span> +x /usr/local/bin/docker-compose</span><br></pre></td></tr></table></figure>
+<p>安装命令里带版本号，实在是拉垮，你可以到<a
+href="https://docs.docker.com/compose/install/">这里</a>找到最新的安装命令。安装完可以用<code>docker-compose --version</code>检查一下。</p>
+<p>Tiny Tiny RSS并不是一个基于Docker的项目，但是<a
+href="https://ttrss.henry.wang/zh/#关于">Awesome
+TTRSS</a>给出了这样一个实现，感谢！</p>
+<p>我们使用基于Docker Compose的安装方法。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> ttrss</span><br><span class="line"><span class="built_in">cd</span> ttrss</span><br><span class="line">curl -fLo docker-compose.yml https://raw.githubusercontent.com/HenryQW/Awesome-TTRSS/main/docker-compose.yml</span><br></pre></td></tr></table></figure>
+<p>接下来，我们利用<code>nano</code>来修改<code>docker-compose.yml</code>。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo nano docker-compose.yml</span><br></pre></td></tr></table></figure>
+<p>一共要修改三个地方。</p>
+<figure class="highlight yml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">service.rss:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">wangqiru/ttrss:latest</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">ttrss</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="number">181</span><span class="string">:80</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">SELF_URL_PATH=http://localhost:181/</span> <span class="comment"># 第一处修改，把地址改成你的域名</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">DB_PASS=strong_password</span> <span class="comment"># 第二处修改，这里写一个非常强的密码，因为你不需要记住它</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">PUID=1000</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">PGID=1000</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">feed-icons:/var/www/feed-icons/</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">public_access</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">service_only</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">database_only</span></span><br><span class="line">    <span class="attr">stdin_open:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">tty:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">service.mercury:</span> <span class="comment"># set Mercury Parser API endpoint to `service.mercury:3000` on TTRSS plugin setting page</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">wangqiru/mercury-parser-api:latest</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">mercury</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">public_access</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">service_only</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">service.opencc:</span> <span class="comment"># set OpenCC API endpoint to `service.opencc:3000` on TTRSS plugin setting page</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">wangqiru/opencc-api-server:latest</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">opencc</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">NODE_ENV=production</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">service_only</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">database.postgres:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">postgres:13-alpine</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">postgres</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">POSTGRES_PASSWORD=strong_password</span> <span class="comment"># 第三处修改，改成和第二处一样的密码</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">~/postgres/data/:/var/lib/postgresql/data</span> <span class="comment"># persist postgres data to ~/postgres/data/ on the host</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">database_only</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line"></span><br><span class="line">  <span class="comment"># utility.watchtower:</span></span><br><span class="line">  <span class="comment">#   container_name: watchtower</span></span><br><span class="line">  <span class="comment">#   image: containrrr/watchtower:latest</span></span><br><span class="line">  <span class="comment">#   volumes:</span></span><br><span class="line">  <span class="comment">#     - /var/run/docker.sock:/var/run/docker.sock</span></span><br><span class="line">  <span class="comment">#   environment:</span></span><br><span class="line">  <span class="comment">#     - WATCHTOWER_CLEANUP=true</span></span><br><span class="line">  <span class="comment">#     - WATCHTOWER_POLL_INTERVAL=86400</span></span><br><span class="line">  <span class="comment">#   restart: always</span></span><br><span class="line"></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">feed-icons:</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networks:</span></span><br><span class="line">  <span class="attr">public_access:</span> <span class="comment"># Provide the access for ttrss UI</span></span><br><span class="line">  <span class="attr">service_only:</span> <span class="comment"># Provide the communication network between services only</span></span><br><span class="line">    <span class="attr">internal:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">database_only:</span> <span class="comment"># Provide the communication between ttrss and database only</span></span><br><span class="line">    <span class="attr">internal:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>然后就可以运行了。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure>
+<p>之后想要修改<code>docker-compose.yml</code>时，先<code>docker-compose down</code>然后修改，改好后重新<code>docker-compose up -d</code>即可。注意以上命令都要在<code>ttrss</code>文件夹内执行。</p>
+<p>然后安装Nginx和Certbot来使用HTTPS。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install nginx</span><br><span class="line">sudo apt install certbot python3-certbot-nginx</span><br></pre></td></tr></table></figure>
+<p>然后可以启动Nginx。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo systemctl start nginx</span><br></pre></td></tr></table></figure>
+<p>利用Certbot创建证书。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo certbot --nginx</span><br></pre></td></tr></table></figure>
+<p>按提示输入你的域名。它还会问你是否要把所有流量都转发到HTTPS，请选择是。接下来修改Nginx配置。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">nano /etc/nginx/nginx.conf</span><br></pre></td></tr></table></figure>
+<p>在<code>http</code>段找到以下两行：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">include /etc/nginx/conf.d/*.conf;</span><br><span class="line">include /etc/nginx/sites-enabled/*;</span><br></pre></td></tr></table></figure>
+<p>把这两行注释掉，然后在这两行下面添加以下内容。请把<code>ttrssdev.henry.wang</code>替换成你的域名。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">upstream ttrssdev &#123;</span><br><span class="line">    server 127.0.0.1:181;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">    listen 80;</span><br><span class="line">    server_name ttrssdev.henry.wang;</span><br><span class="line">    return 301 https://ttrssdev.henry.wang$request_uri;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">    listen 443 ssl;</span><br><span class="line">    gzip on;</span><br><span class="line">    server_name  ttrssdev.henry.wang;</span><br><span class="line">    ssl_certificate /etc/letsencrypt/live/ttrssdev.henry.wang/fullchain.pem;</span><br><span class="line">    ssl_certificate_key /etc/letsencrypt/live/ttrssdev.henry.wang/privkey.pem;</span><br><span class="line">    access_log /var/log/nginx/ttrssdev_access.log combined;</span><br><span class="line">    error_log  /var/log/nginx/ttrssdev_error.log;</span><br><span class="line">    location / &#123;</span><br><span class="line">        proxy_redirect off;</span><br><span class="line">        proxy_pass http://ttrssdev;</span><br><span class="line">        proxy_set_header  Host                $http_host;</span><br><span class="line">        proxy_set_header  X-Real-IP           $remote_addr;</span><br><span class="line">        proxy_set_header  X-Forwarded-Ssl     on;</span><br><span class="line">        proxy_set_header  X-Forwarded-For     $proxy_add_x_forwarded_for;</span><br><span class="line">        proxy_set_header  X-Forwarded-Proto   $scheme;</span><br><span class="line">        proxy_set_header  X-Frame-Options     SAMEORIGIN;</span><br><span class="line">        client_max_body_size        100m;</span><br><span class="line">        client_body_buffer_size     128k;</span><br><span class="line">        proxy_buffer_size           4k;</span><br><span class="line">        proxy_buffers               4 32k;</span><br><span class="line">        proxy_busy_buffers_size     64k;</span><br><span class="line">        proxy_temp_file_write_size  64k;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后，重启Nginx。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo systemctl restart nginx</span><br></pre></td></tr></table></figure>
+<p>然后访问你的域名即可。记得改掉admin的密码，然后在用户里创建一个普通用户来使用。</p>
+]]></content>
+      <categories>
+        <category>解决方案</category>
+      </categories>
+      <tags>
+        <tag>RSS</tag>
+      </tags>
+  </entry>
+</search>
