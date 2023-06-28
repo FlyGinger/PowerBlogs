@@ -1,5 +1,5 @@
 ---
-title: FFmpeg 命令
+title: FFmpeg命令
 date: 2022-12-01
 categories: 解决方案
 tags: [FFmpeg]

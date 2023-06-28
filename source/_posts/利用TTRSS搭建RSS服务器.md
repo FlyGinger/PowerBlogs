@@ -1,5 +1,5 @@
 ---
-title: 利用 TTRSS 搭建 RSS 服务器
+title: 利用TTRSS搭建RSS服务器
 date: 2022-04-08
 categories: 解决方案
 tags: [RSS]
