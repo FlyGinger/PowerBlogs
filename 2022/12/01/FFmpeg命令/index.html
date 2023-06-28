@@ -19,26 +19,28 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"flyginger.github.io","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.17.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
 
-    <meta property="og:type" content="website">
-<meta property="og:title" content="tags">
-<meta property="og:url" content="https://flyginger.github.io/tags/index.html">
+    <meta name="description" content="查看硬件支持 使用如下命令可以查看硬件支持、编码器、解码器等。 123ffmpeg -hwaccelsffmpeg -encodersffmpeg -decoders 使用如下命令可以查看单个编码器的参数。 1ffmpeg -h encoder&#x3D;libx265 裁切黑边 可以使用cropdetect自动检测黑边，用crop进行黑边裁切。 cropdetect后的数值是灵敏度，如果黑边不是纯黑，可以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FFmpeg命令">
+<meta property="og:url" content="https://flyginger.github.io/2022/12/01/FFmpeg%E5%91%BD%E4%BB%A4/index.html">
 <meta property="og:site_name" content="zenk&#39;s blog">
+<meta property="og:description" content="查看硬件支持 使用如下命令可以查看硬件支持、编码器、解码器等。 123ffmpeg -hwaccelsffmpeg -encodersffmpeg -decoders 使用如下命令可以查看单个编码器的参数。 1ffmpeg -h encoder&#x3D;libx265 裁切黑边 可以使用cropdetect自动检测黑边，用crop进行黑边裁切。 cropdetect后的数值是灵敏度，如果黑边不是纯黑，可以">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2023-06-27T14:34:46.000Z">
+<meta property="article:published_time" content="2022-12-01T00:00:00.000Z">
 <meta property="article:modified_time" content="2023-06-28T03:19:23.135Z">
 <meta property="article:author" content="zenk">
+<meta property="article:tag" content="FFmpeg">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="https://flyginger.github.io/tags/">
+<link rel="canonical" href="https://flyginger.github.io/2022/12/01/FFmpeg%E5%91%BD%E4%BB%A4/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":false,"lang":"zh-CN","comments":true,"permalink":"https://flyginger.github.io/tags/index.html","path":"tags/index.html","title":"tags"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://flyginger.github.io/2022/12/01/FFmpeg%E5%91%BD%E4%BB%A4/","path":"2022/12/01/FFmpeg命令/","title":"FFmpeg命令"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>tags | zenk's blog
-</title>
+<title>FFmpeg命令 | zenk's blog</title>
   
 
 
@@ -124,7 +126,7 @@
   
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           文章目录
@@ -137,6 +139,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E7%A1%AC%E4%BB%B6%E6%94%AF%E6%8C%81"><span class="nav-number">1.</span> <span class="nav-text">查看硬件支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A3%81%E5%88%87%E9%BB%91%E8%BE%B9"><span class="nav-number">2.</span> <span class="nav-text">裁切黑边</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -179,41 +182,116 @@
 
     </div>
 
-    <div class="main-inner page posts-expand">
+    <div class="main-inner post posts-expand">
 
 
-    
-    
-    
-    <div class="post-block" lang="zh-CN"><header class="post-header">
+  
 
-<h1 class="post-title" itemprop="name headline">tags
-</h1>
 
-<div class="post-meta-container">
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://flyginger.github.io/2022/12/01/FFmpeg%E5%91%BD%E4%BB%A4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zenk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zenk's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="FFmpeg命令 | zenk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FFmpeg命令
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-12-01 00:00:00" itemprop="dateCreated datePublished" datetime="2022-12-01T00:00:00+00:00">2022-12-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-06-28 03:19:23" itemprop="dateModified" datetime="2023-06-28T03:19:23+00:00">2023-06-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/" itemprop="url" rel="index"><span itemprop="name">解决方案</span></a>
+        </span>
+    </span>
+
+  
 </div>
 
-</header>
+        </div>
+      </header>
 
-      
-      
-      <div class="post-body"><div class="tag-cloud">
-  <div class="tag-cloud-title">
-    目前共计 5 个标签
-  </div>
-  <div class="tag-cloud-tags">
-    <a href="/tags/FFmpeg/" style="font-size: 12px;" class="tag-cloud-0">FFmpeg</a> <a href="/tags/Linux/" style="font-size: 12px;" class="tag-cloud-0">Linux</a> <a href="/tags/RSS/" style="font-size: 12px;" class="tag-cloud-0">RSS</a> <a href="/tags/%E5%86%85%E5%AD%98/" style="font-size: 12px;" class="tag-cloud-0">内存</a> <a href="/tags/%E9%80%8F%E6%98%8E%E5%A4%A7%E9%A1%B5/" style="font-size: 12px;" class="tag-cloud-0">透明大页</a>
-  </div>
-</div>
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="查看硬件支持">查看硬件支持</h2>
+<p>使用如下命令可以查看硬件支持、编码器、解码器等。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -hwaccels</span><br><span class="line">ffmpeg -encoders</span><br><span class="line">ffmpeg -decoders</span><br></pre></td></tr></table></figure>
+<p>使用如下命令可以查看单个编码器的参数。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -h encoder=libx265</span><br></pre></td></tr></table></figure>
+<h2 id="裁切黑边">裁切黑边</h2>
+<p>可以使用<code>cropdetect</code>自动检测黑边，用<code>crop</code>进行黑边裁切。</p>
+<p><code>cropdetect</code>后的数值是灵敏度，如果黑边不是纯黑，可以适当提高数值。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ffplay -i xxx.mp4 -an -vf cropdetect=20</span><br><span class="line">ffmpeg -i xxx.mp4 -vf crop=xxx</span><br></pre></td></tr></table></figure>
 
-      </div>
-      
-      
-      
     </div>
 
     
     
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/FFmpeg/" rel="tag"># FFmpeg</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/04/08/%E5%88%A9%E7%94%A8TTRSS%E6%90%AD%E5%BB%BARSS%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="prev" title="利用TTRSS搭建RSS服务器">
+                  <i class="fa fa-chevron-left"></i> 利用TTRSS搭建RSS服务器
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2023/06/27/Linux%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" rel="next" title="Linux内存管理">
+                  Linux内存管理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
 
 
 </div>
