@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"flyginger.github.io","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.17.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="ELF（Executable and Linkable Format）是一种标准文件格式，支持四种类型的文件：  可执行文件（executable file）， 目标代码（object code）， 共享库（shared library）， 核心转储（core dump）。   ELF文件有两种视图，通过program header可以访问运行时的segment，通过section header可">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ELF文件格式">
+<meta property="og:url" content="https://flyginger.github.io/2023/07/28/ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/index.html">
+<meta property="og:site_name" content="zenk&#39;s blog">
+<meta property="og:description" content="ELF（Executable and Linkable Format）是一种标准文件格式，支持四种类型的文件：  可执行文件（executable file）， 目标代码（object code）， 共享库（shared library）， 核心转储（core dump）。   ELF文件有两种视图，通过program header可以访问运行时的segment，通过section header可">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://flyginger.github.io/2023/07/28/ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/elf-layout.svg">
+<meta property="article:published_time" content="2023-07-28T14:47:48.000Z">
+<meta property="article:modified_time" content="2023-08-02T01:31:09.504Z">
+<meta property="article:author" content="zenk">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="ELF">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://flyginger.github.io/2023/07/28/ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/elf-layout.svg">
+
+
+<link rel="canonical" href="https://flyginger.github.io/2023/07/28/ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://flyginger.github.io/2023/07/28/ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/","path":"2023/07/28/ELF文件格式/","title":"ELF文件格式"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ELF文件格式 | zenk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">zenk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#elf-header"><span class="nav-number">1.</span> <span class="nav-text">ELF Header</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#section"><span class="nav-number">2.</span> <span class="nav-text">Section</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#special-section"><span class="nav-number">2.1.</span> <span class="nav-text">Special Section</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#symbol-table"><span class="nav-number">3.</span> <span class="nav-text">Symbol Table</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zenk</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/big/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://flyginger.github.io/2023/07/28/ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zenk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zenk's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ELF文件格式 | zenk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ELF文件格式
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-07-28 14:47:48" itemprop="dateCreated datePublished" datetime="2023-07-28T14:47:48+00:00">2023-07-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-08-02 01:31:09" itemprop="dateModified" datetime="2023-08-02T01:31:09+00:00">2023-08-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>ELF（Executable and Linkable
+Format）是一种标准文件格式，支持四种类型的文件：</p>
+<ul>
+<li>可执行文件（executable file），</li>
+<li>目标代码（object code），</li>
+<li>共享库（shared library），</li>
+<li>核心转储（core dump）。</li>
+</ul>
+<img src="/2023/07/28/ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/elf-layout.svg" class="" alt="ELF文件格式">
+<p>ELF文件有两种视图，通过program
+header可以访问运行时的segment，通过section header可以访问section。</p>
+<p>ELF文件中除了ELF
+header必定位于起始位置之外，其他结构的顺序是未定义的。</p>
+<h2 id="elf-header">ELF Header</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// elf.h</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> EI_NIDENT (16)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="comment">// 与Elf64_Ehdr完全一致，只是把所有的“64”换成“32”</span></span><br><span class="line">&#125; Elf32_Ehdr;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">char</span>	e_ident[EI_NIDENT];	<span class="comment">/* Magic number and other info */</span></span><br><span class="line">  Elf64_Half	e_type;			<span class="comment">/* Object file type */</span></span><br><span class="line">  Elf64_Half	e_machine;		<span class="comment">/* Architecture */</span></span><br><span class="line">  Elf64_Word	e_version;		<span class="comment">/* Object file version */</span></span><br><span class="line">  Elf64_Addr	e_entry;		<span class="comment">/* Entry point virtual address */</span></span><br><span class="line">  Elf64_Off	e_phoff;		<span class="comment">/* Program header table file offset */</span></span><br><span class="line">  Elf64_Off	e_shoff;		<span class="comment">/* Section header table file offset */</span></span><br><span class="line">  Elf64_Word	e_flags;		<span class="comment">/* Processor-specific flags */</span></span><br><span class="line">  Elf64_Half	e_ehsize;		<span class="comment">/* ELF header size in bytes */</span></span><br><span class="line">  Elf64_Half	e_phentsize;		<span class="comment">/* Program header table entry size */</span></span><br><span class="line">  Elf64_Half	e_phnum;		<span class="comment">/* Program header table entry count */</span></span><br><span class="line">  Elf64_Half	e_shentsize;		<span class="comment">/* Section header table entry size */</span></span><br><span class="line">  Elf64_Half	e_shnum;		<span class="comment">/* Section header table entry count */</span></span><br><span class="line">  Elf64_Half	e_shstrndx;		<span class="comment">/* Section header string table index */</span></span><br><span class="line">&#125; Elf64_Ehdr;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>源代码缩进如此，可不是我搞乱的。</p>
+</blockquote>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Size (in byte)</th>
+<th style="text-align: left;">Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>Elf32_Half</code>,
+<code>Elf64_Half</code></td>
+<td style="text-align: left;"><code>uint16_t</code></td>
+<td style="text-align: left;">unsigned 16-bit</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>Elf32_Word</code>,
+<code>Elf64_Word</code></td>
+<td style="text-align: left;"><code>uint32_t</code></td>
+<td style="text-align: left;">unsigned 32-bit</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>Elf32_Sword</code>,
+<code>Elf64_Sword</code></td>
+<td style="text-align: left;"><code>int32_t</code></td>
+<td style="text-align: left;">signed 32-bit</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>Elf32_Xword</code>,
+<code>Elf64_Xword</code></td>
+<td style="text-align: left;"><code>uint64_t</code></td>
+<td style="text-align: left;">unsigned 64-bit</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>Elf32_Sxword</code>,
+<code>Elf64_Sxword</code></td>
+<td style="text-align: left;"><code>int64_t</code></td>
+<td style="text-align: left;">signed 64-bit</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>Elf32_Addr</code>,
+<code>Elf64_Addr</code></td>
+<td style="text-align: left;"><code>uint32_t</code>,
+<code>uint64_t</code></td>
+<td style="text-align: left;">address</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>Elf32_Off</code>,
+<code>Elf64_Off</code></td>
+<td style="text-align: left;"><code>uint32_t</code>,
+<code>uint64_t</code></td>
+<td style="text-align: left;">file offset</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>Elf32_Section</code>,
+<code>Elf64_Section</code></td>
+<td style="text-align: left;"><code>uint16_t</code></td>
+<td style="text-align: left;">section index</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>Elf32_Versym</code>,
+<code>Elf64_Versym</code></td>
+<td style="text-align: left;"><code>uint16_t</code></td>
+<td style="text-align: left;">version symbol information</td>
+</tr>
+</tbody>
+</table>
+<p>上表展示了各个数据结构的位宽和作用。在32位和64位模式下，只有<code>Addr</code>和<code>Off</code>的位宽不同，因此<code>Elf32_Ehdr</code>和<code>Elf64_Ehdr</code>分别是52和64字节。</p>
+<ul>
+<li><code>e_ident</code>：16个字节的标识信息，标识了文件类型、位宽、大小端、版本号等。
+<ul>
+<li><code>e_ident[EI_MAG0]</code>到<code>e_ident[EI_MAG3]</code>，值为<code>"\177ELF"</code>，表示该文件是一个ELF文件。</li>
+<li><code>e_ident[EI_CLASS]</code>，文件类型。
+<ul>
+<li><code>ELFCLASSNONE</code>：非法类型。</li>
+<li><code>ELFCLASS32</code>，32位。</li>
+<li><code>ELFCLASS64</code>，64位。</li>
+</ul></li>
+<li><code>e_ident[EI_DATA]</code>，数据编码。
+<ul>
+<li><code>ELFDATANONE</code>，非法编码。</li>
+<li><code>ELFDATA2LSB</code>，补码，小端</li>
+<li><code>ELFDATA2MSB</code>，补码，大端</li>
+</ul></li>
+<li><code>e_ident[EI_VERSION]</code>，版本号，必须是<code>EV_CURRENT</code>。</li>
+<li><code>e_ident[EI_OSABI]</code>，OS ABI标识符。
+<ul>
+<li>比如<code>ELFOSABI_GNU</code>、<code>ELFOSABI_FREEBSD</code>、<code>ELFOSABI_OPENBSD</code>等。</li>
+</ul></li>
+<li><code>e_ident[EI_ABIVERSION]</code>，ABI版本。</li>
+<li><code>e_ident[EI_PAD]</code>，padding。</li>
+</ul></li>
+<li><code>e_type</code>：文件类型。
+<ul>
+<li><code>ET_REL</code>: relocatable file.</li>
+<li><code>ET_EXEC</code>: executable file.</li>
+<li><code>ET_DYN</code>: shared object file.</li>
+<li><code>ET_CORE</code>: core file.</li>
+<li>其他依赖于OS或处理的类型。</li>
+</ul></li>
+<li><code>e_machine</code>：架构信息。
+<ul>
+<li>比如<code>EM_X86_64</code>、<code>EM_AARCH64</code>等。</li>
+</ul></li>
+<li><code>e_version</code>：版本号，必须是<code>EV_CURRENT</code>。</li>
+<li><code>e_entry</code>：程序执行的起点，entry
+point的地址。如果没有entry point，那么置零。</li>
+<li><code>e_phoff</code>：指向program header table的指针。</li>
+<li><code>e_shoff</code>：指向section header table的指针。</li>
+<li><code>e_flags</code>：用于特定处理器的标志。</li>
+<li><code>e_ehsize</code>：ELF header的大小，以字节计。</li>
+<li><code>e_phentsize</code>：program header
+table中每个表项的大小，以字节计。</li>
+<li><code>e_phnum</code>：program header table中的表项数量。</li>
+<li><code>e_shentsize</code>：section header
+table中每个表项的大小，以字节计。</li>
+<li><code>e_shnum</code>：section header table中的表项数量。</li>
+<li><code>e_shstrndx</code>：section header
+table中与section名称相关的表项的索引。</li>
+</ul>
+<h2 id="section">Section</h2>
+<p>ELF文件中的每个section都在section header
+table中有对应的表项；反过来，不是每一个表项都对应一个实际的section。每个section在文件中都是连续的，并且不重叠。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="comment">// 略</span></span><br><span class="line">&#125; Elf32_Shdr;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  Elf64_Word	sh_name;		<span class="comment">/* Section name (string tbl index) */</span></span><br><span class="line">  Elf64_Word	sh_type;		<span class="comment">/* Section type */</span></span><br><span class="line">  Elf64_Xword	sh_flags;		<span class="comment">/* Section flags */</span></span><br><span class="line">  Elf64_Addr	sh_addr;		<span class="comment">/* Section virtual addr at execution */</span></span><br><span class="line">  Elf64_Off	sh_offset;		<span class="comment">/* Section file offset */</span></span><br><span class="line">  Elf64_Xword	sh_size;		<span class="comment">/* Section size in bytes */</span></span><br><span class="line">  Elf64_Word	sh_link;		<span class="comment">/* Link to another section */</span></span><br><span class="line">  Elf64_Word	sh_info;		<span class="comment">/* Additional section information */</span></span><br><span class="line">  Elf64_Xword	sh_addralign;		<span class="comment">/* Section alignment */</span></span><br><span class="line">  Elf64_Xword	sh_entsize;		<span class="comment">/* Entry size if section holds table */</span></span><br><span class="line">&#125; Elf64_Shdr;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>sh_name</code>：section名称，是section header string table
+section的索引。</li>
+<li><code>sh_type</code>：section类型。
+<ul>
+<li><code>SHT_NULL</code>：空section。</li>
+<li><code>SHT_PROGBITS</code>：程序自定义的数据。</li>
+<li><code>SHT_SYMTAB</code>：符号表。</li>
+<li><code>SHT_STRTAB</code>：字符串表。</li>
+<li><code>SHT_RELA</code>：可重定位表，有addend。</li>
+<li><code>SHT_HASH</code>：符号哈希表。</li>
+<li><code>SHT_DYNAMIC</code>：动态链接信息。</li>
+<li><code>SHT_NOTE</code>：信息。</li>
+<li><code>SHT_NOBITS</code>：没有数据的程序空间。</li>
+<li><code>SHT_REL</code>：可重定位表，没有addend。</li>
+<li><code>SHT_DYNSYM</code>：动态链接器符号表。</li>
+<li>……</li>
+</ul></li>
+<li><code>sh_flags</code>：标志位。
+<ul>
+<li><code>SHF_WRITE</code>：可写的。</li>
+<li><code>SHF_ALLOC</code>：运行时占用内存。</li>
+<li><code>SHF_EXECINSTR</code>：可执行的。</li>
+<li>……</li>
+</ul></li>
+<li><code>sh_addr</code>：运行时section的虚拟地址。运行时不出现在内存映像中的section此字段为0。</li>
+<li><code>sh_offset</code>：在ELF文件中的位置，就是从文件头到section起始位置的距离。</li>
+<li><code>sh_size</code>：section的长度，单位是字节。</li>
+<li><code>sh_link</code>：section header
+table中其他section的索引，具体含义随section类型而不同。</li>
+<li><code>sh_info</code>：其他section信息。</li>
+<li><code>sh_addralign</code>：对齐。必须是0或2的幂，0和1的含义相同。</li>
+<li><code>sh_entsize</code>：如果section中有表，此项表示表项的大小。</li>
+</ul>
+<h3 id="special-section">Special Section</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Flags</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>.bss</code></td>
+<td style="text-align: left;"><code>SHT_NOBITS</code></td>
+<td style="text-align: left;"><code>SHF_ALLOC | SHF_WRITE</code></td>
+<td style="text-align: left;">出现在内存中的未初始化数据。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.comment</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">版本控制信息。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.data</code>,
+<code>.data1</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"><code>SHF_ALLOC | SHF_WRITE</code></td>
+<td style="text-align: left;">出现在内存中的初始化过的数据。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.debug</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">符号调试信息。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.dynamic</code></td>
+<td style="text-align: left;"><code>SHT_DYNAMIC</code></td>
+<td style="text-align: left;"><code>SHF_ALLOC | SHF_WRITE?</code></td>
+<td
+style="text-align: left;">动态链接信息。是否<code>SHF_WRITE</code>取决于处理器。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.dynstr</code></td>
+<td style="text-align: left;"><code>SHT_STRTAB</code></td>
+<td style="text-align: left;"><code>SHF_ALLOC</code></td>
+<td style="text-align: left;">用于动态链接的字符串。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.dynsym</code></td>
+<td style="text-align: left;"><code>SHT_DYNSYM</code></td>
+<td style="text-align: left;"><code>SHF_ALLOC</code></td>
+<td style="text-align: left;">动态链接符号表。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.fini</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td
+style="text-align: left;"><code>SHF_ALLOC | SHF_EXECINSTR</code></td>
+<td style="text-align: left;">进程终止的可执行指令。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.got</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">全局偏移表。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.hash</code></td>
+<td style="text-align: left;"><code>SHT_HASH</code></td>
+<td style="text-align: left;"><code>SHF_ALLOC</code></td>
+<td style="text-align: left;">符号哈希表。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.init</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td
+style="text-align: left;"><code>SHF_ALLOC | SHF_EXECINSTR</code></td>
+<td style="text-align: left;">进程初始化的可执行指令。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.interp</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">程序解释器的路径名。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.line</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">符号调试的行号信息。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.note</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">注释信息。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.plt</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Procedure linkage table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.rel&lt;name&gt;</code>,
+<code>.rela&lt;name&gt;</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">重定位信息。</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.rodata</code>,
+<code>.rodata1</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td style="text-align: left;"><code>SHF_ALLOC</code></td>
+<td style="text-align: left;">只读数据。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.shstrtab</code></td>
+<td style="text-align: left;"><code>SHT_STRTAB</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">节区名称。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.strtab</code></td>
+<td style="text-align: left;"><code>SHT_STRTAB</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">字符串表。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>.symtab</code></td>
+<td style="text-align: left;"><code>SHT_SYMTAB</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">符号表。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>.text</code></td>
+<td style="text-align: left;"><code>SHT_PROGBITS</code></td>
+<td
+style="text-align: left;"><code>SHF_ALLOC | SHF_EXECINSTR</code></td>
+<td style="text-align: left;">可执行指令。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="symbol-table">Symbol Table</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  Elf32_Word	st_name;		<span class="comment">/* Symbol name (string tbl index) */</span></span><br><span class="line">  Elf32_Addr	st_value;		<span class="comment">/* Symbol value */</span></span><br><span class="line">  Elf32_Word	st_size;		<span class="comment">/* Symbol size */</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">char</span>	st_info;		<span class="comment">/* Symbol type and binding */</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">char</span>	st_other;		<span class="comment">/* Symbol visibility */</span></span><br><span class="line">  Elf32_Section	st_shndx;		<span class="comment">/* Section index */</span></span><br><span class="line">&#125; Elf32_Sym;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  Elf64_Word	st_name;		<span class="comment">/* Symbol name (string tbl index) */</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">char</span>	st_info;		<span class="comment">/* Symbol type and binding */</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">char</span> st_other;		<span class="comment">/* Symbol visibility */</span></span><br><span class="line">  Elf64_Section	st_shndx;		<span class="comment">/* Section index */</span></span><br><span class="line">  Elf64_Addr	st_value;		<span class="comment">/* Symbol value */</span></span><br><span class="line">  Elf64_Xword	st_size;		<span class="comment">/* Symbol size */</span></span><br><span class="line">&#125; Elf64_Sym;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ELF32_ST_BIND(val)		(((unsigned char) (val)) &gt;&gt; 4)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ELF32_ST_TYPE(val)		((val) &amp; 0xf)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ELF32_ST_INFO(bind, type)	(((bind) &lt;&lt; 4) + ((type) &amp; 0xf))</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Both Elf32_Sym and Elf64_Sym use the same one-byte st_info field.  */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ELF64_ST_BIND(val)		ELF32_ST_BIND (val)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ELF64_ST_TYPE(val)		ELF32_ST_TYPE (val)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ELF64_ST_INFO(bind, type)	ELF32_ST_INFO ((bind), (type))</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>st_name</code>：符号名称，是符号字符串表的索引。</li>
+<li><code>st_info</code>：符号类型和绑定信息。
+<ul>
+<li><code>st_bind</code>：绑定信息，确定链接可见性和行为。
+<ul>
+<li><code>STB_LOCAL</code>：定义该符号的文件之外不可见。</li>
+<li><code>STB_GLOBAL</code>：全局可见，对定义该符号的文件之外也可见。</li>
+<li><code>STB_WEAK</code>：与<code>STB_GLOBAL</code>类似，但优先级低。</li>
+<li>……</li>
+</ul></li>
+<li><code>st_type</code>：符号类型。
+<ul>
+<li><code>stt_object</code>：数据对象，比如变量、数组。</li>
+<li><code>stt_func</code>：函数或其他可执行代码。</li>
+<li>……</li>
+</ul></li>
+</ul></li>
+<li><code>st_other</code>：符号可见性。</li>
+<li><code>st_shndx</code>：section索引。</li>
+<li><code>st_value</code>：符号相关的值，具体含义取决于符号。
+<ul>
+<li>在可重定位文件中，<code>st_value</code>是从<code>st_shndx</code>所指section的虚拟地址起始位置到符号位置的偏移。</li>
+<li>在可执行文件和共享库中，<code>st_value</code>是一个虚拟地址。</li>
+</ul></li>
+<li><code>st_size</code>：符号的尺寸。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/ELF/" rel="tag"># ELF</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2023/06/27/Linux%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" rel="prev" title="Linux内存管理">
+                  <i class="fa fa-chevron-left"></i> Linux内存管理
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zenk</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/4.0.7/pangu.min.js" integrity="sha256-j+yj56cdEY2CwkVtGyz18fNybFGpMGJ8JxG3GSyO2+I=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>
