@@ -146,18 +146,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-count">5</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -177,6 +177,184 @@
     </div>
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://flyginger.github.io/2023/08/04/DPDK-Programmer-s-Guide%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zenk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zenk's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | zenk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2023/08/04/DPDK-Programmer-s-Guide%E7%AC%94%E8%AE%B0/" class="post-title-link" itemprop="url">DPDK Programmer's Guide笔记</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-08-04 16:49:12" itemprop="dateCreated datePublished" datetime="2023-08-04T16:49:12+00:00">2023-08-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-08-08 06:15:34" itemprop="dateModified" datetime="2023-08-08T06:15:34+00:00">2023-08-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/DPDK/" itemprop="url" rel="index"><span itemprop="name">DPDK</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <blockquote>
+<p>本文基于DPDK 22.11.2。</p>
+</blockquote>
+<h2 id="environment-abstraction-layer">Environment Abstraction
+Layer</h2>
+<p>EAL（Environment Abstraction
+Layer）负责访问低级资源，比如硬件和内存空间。它为应用和库提供了一个通用接口，隐藏了环境特定的细节。</p>
+<h3 id="linux用户空间下的eal">Linux用户空间下的EAL</h3>
+<p>在Linux用户空间环境中，DPDK应用利用<code>pthread</code>库，以用户空间应用的身份运行。EAL利用<code>mmap()</code>在<code>hugetlbfs</code>中进行物理内存分配，然后将内存暴露给DPDK服务层，比如<code>mempool</code>库。</p>
+<h4 id="初始化和核心启动">初始化和核心启动</h4>
+<p>部分初始化是由<code>glibc</code>的<code>start</code>函数完成的，然后就进入了DPDK应用的<code>main()</code>函数。核心的初始化和启动是通过<code>rte_eal_init()</code>函数完成的，<code>rte_eal_init()</code>中使用<code>pthread_self()</code>、<code>pthread_create()</code>、<code>pthread_setaffinity_np()</code>创建执行单元，并分配它到特定的逻辑核。</p>
+<img src="/2023/08/04/DPDK-Programmer-s-Guide%E7%AC%94%E8%AE%B0/linuxapp_launch.svg" class="" alt="EAL在Linux用户态环境中初始化">
+<p>内存空间、ring、内存池、LPM表和哈希表等对象的初始化也是在main逻辑核，是整个应用初始化的一部分。这些对象的创建和初始化函数不是线程安全的，但完成初始化之后，这些对象本身是线程安全的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rte_eal_init():</span><br><span class="line">  lib/eal/include/rte_eal.h</span><br><span class="line">  lib/eal/linux/eal.c</span><br></pre></td></tr></table></figure>
+<h4 id="内存映射发现和内存预留">内存映射发现和内存预留</h4>
+<p>EAL使用大页完成大块连续物理内存的分配，并且EAL提供了在这块连续内存中预留命名内存空间的API。</p>
+<blockquote>
+<p>DPDK作为用户空间应用框架，使用DPDK的软件需要处理的是虚拟地址。但是，硬件不能理解用户空间虚拟地址，而是使用IO地址。IO地址可能是物理地址（Physical
+Addresses，PA），也可能是IO虚拟地址（IO Virtual Addresses，IOVA）。</p>
+<p>DPDK不区分PA和IOVA，而是统一称作IOVA。但是，DPDK会区分PA直接作为IOVA（IOVA
+as PA），还是IOVA匹配用户空间虚拟地址（IOVA as VA）这两种情况。</p>
+<img src="/2023/08/04/DPDK-Programmer-s-Guide%E7%AC%94%E8%AE%B0/deep-dive-into-iova-fig01-813747.png" class="" alt="IOVA as PA模式">
+<p>IOVA as
+PA模式下，分配给DPDK的所有内存区域的IOVA都是实际的PA，并且虚拟内存的布局与物理内存的布局相同。IOVA
+as
+PA的优势在于适用于所有硬件，并且与内核空间之间也很适配（因为物理地址到内核空间虚拟地址的映射是直接映射）。IOVA
+as
+PA的缺点之一在于需要root权限，否则无法获取内存区域的真实物理地址。缺点之二是物理内存的布局会影响虚拟内存的布局。如果物理内存碎片化比较严重，那么虚拟内存也会是相同程度的碎片化，从而影响DPDK应用对虚拟内存的使用。</p>
+<img src="/2023/08/04/DPDK-Programmer-s-Guide%E7%AC%94%E8%AE%B0/deep-dive-into-iova-fig03-813747.png" class="" alt="IOVA as VA模式">
+<p>IOVA as
+VA模式下，物理内存会被重新排列，以匹配虚拟内存空间的布局。DPDK通过内核提供的功能完成这一操作，而内核则是通过IOMMU来完成物理内存重映射的。IOVA
+as
+VA的优点之一就是无需root权限，之二就是避免物理内存的碎片化影响到虚拟内存。IOVA
+as VA的缺点在于需要IOMMU的支持。</p>
+<p>VFIO（Virtual Function
+I/O）是内核基础设置，可以把设备寄存器和中断暴露给用户空间应用，并且可以利用IOMMU建立IOVA映射。</p>
+</blockquote>
+<p>DPDK的内存子系统有两种模式，动态模式和传统模式。</p>
+<p>动态模式下，DPDK使用的大页数量会随着DPDK应用需求而增减。这种模式下分配的内存不能保证是IOVA连续的。如果需要连续的多页IOVA，建议对所有的物理设备使用VFIO驱动，或使用传统模式。动态模式下也可以使用<code>-m</code>或<code>--socket-mem</code>指定预分配内存的大小，预分配的内存在运行时不会被释放。动态模式下可以使用<code>--single-file-segments</code>命令行参数把多个内存页放在同一个文件中，以满足例如用户空间vhost等应用对于页文件描述符数量的限制。可以使用<code>--socket-limit</code>命令行参数来限制DPDK应用可以使用的内存的最大数量。</p>
+<p>传统模式下，EAL会在启动时预留全部内存，然后将其重排为IOVA连续的一大块，并且不会在运行时申请或释放大页。需要使用<code>--legacy-mem</code>EAL命令行参数启用传统模式，如果不用<code>-m</code>或<code>--socket-mem</code>指定大小，那么DPDK将使用所有可用的内存大页。</p>
+<p>Linux下可以使用<code>hugetlbfs</code>中的文件或者匿名映射来获取大页。使用多进程时必须使用<code>hugetlbfs</code>，因为多个进程需要映射到同一个大页。EAL会在<code>--huge-dir</code>指定的目录中创建<code>--file-prefix</code>指定前缀的文件。匿名映射模式虽然不支持多进程，但是优点在于不需要root权限。</p>
+<h3 id="多线程">多线程</h3>
+<p>DPDK通常会在每个核心上绑定一个<code>pthread</code>来避免任务切换导致的性能损失，这可以提供显著的性能提升，但缺少灵活性，而且也不总是高效的。</p>
+<p><code>lcore</code>代表EAL线程，在Linux实现中就是<code>pthread</code>。<code>lcore</code>由EAL创建和管理，并负责完成<code>rte_eal_remote_launch</code>发出的工作指令。可以使用<code>--lcores</code>命令行参数来设置<code>lcore</code>的核心亲和性，从而间接完成绑核操作。</p>
+<p><code>rte_ring</code>支持多生产者多消费者队列，但是是非抢占式的，即同一个<code>ring</code>同时只能有一个线程进行入队或者出队的操作。如果某个线程A正在进行入队操作，另一个线程B也想要对同一个队列进行入队操作，则B只能等待；如果此时线程A被更高优先级的线程抢占，那么有可能会发生死锁。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man7/sched.7.html">Linux
+CPU调度概览</a></p>
+</blockquote>
+<p>POSIX API定义了一种概念：异步信号安全函数（async-signal-safe
+function），指的是可以安全地在信号处理函数中使用的函数。许多DPDK函数不是可重入的（non-reentrant），因此不是异步信号安全函数。</p>
+<blockquote>
+<p><a
+target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man7/signal-safety.7.html">异步信号安全函数</a></p>
+<p><a
+target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">可重入</a></p>
+<p>举例来说，函数A执行过程中，被更高优先级的任务B（例如中断、信号处理）抢占，而在任务B中又调用了函数A。如果A在这种情况下也能保证正确性，那么A就是可重入的。</p>
+</blockquote>
+<h3 id="malloc"><code>malloc</code></h3>
+<p>EAL提供了<code>malloc</code>
+API用于分配任意大小的内存。通常来说，<code>malloc</code>
+API不应该在数据面中使用，因为它比基于池（pool-based）的API慢，因为分配和释放过程中使用了锁。</p>
+<p><code>malloc</code>库中有两个主要数据结构：</p>
+<ul>
+<li><code>malloc_heap</code>，用于跟踪每个<code>socket</code>的空闲空间，是一个双向链表。</li>
+<li><code>malloc_elem</code>，分配和空闲空间跟踪的基本元素，是链表中的节点。</li>
+</ul>
+<p><code>malloc_heap</code>中有以下关键字段：</p>
+<ul>
+<li><code>lock</code>：用于控制同步访问。由于<code>malloc_heap</code>中存放着跟踪空闲空间的链表，因此需要防止多个线程同时对链表进行操作。</li>
+<li><code>free_head</code>：指向第一个空闲空间链表节点。</li>
+<li><code>first</code>：指向<code>malloc_heap</code>中第一个<code>malloc_elem</code>。</li>
+<li><code>last</code>：指向<code>malloc_heap</code>中最后一个<code>malloc_elem</code>。</li>
+</ul>
+<img src="/2023/08/04/DPDK-Programmer-s-Guide%E7%AC%94%E8%AE%B0/malloc_heap.svg" class="" alt="&#96;malloc_heap&#96;和&#96;malloc_elem&#96;举例">
+<p>由于在动态模式下大页是在运行时向系统申请和释放的，所以相邻的<code>malloc_elem</code>对应的实际内存不一定相邻。并且，横跨多页的<code>malloc_elem</code>中的页也可能不是IOVA连续的，每个<code>malloc_elem</code>只能保证其中的内存是VA连续的。</p>
+<p><code>malloc_elem</code>有两种用途，其一是作为空闲或已分配内存的header，其二是作为header
+padding。</p>
+<p><code>malloc_elem</code>中有以下关键字段：</p>
+<ul>
+<li><code>heap</code>：指向持有该<code>malloc_elem</code>的<code>malloc_heap</code>的指针。</li>
+<li><code>prev</code>、<code>next</code>：指向前一个和后一个元素。当前元素被释放时，可以查看是否可以和前后元素进行合并。</li>
+<li><code>free_list</code>：指向前一个和后一个空闲节点。</li>
+<li><code>state</code>：可选值有<code>FREE</code>、<code>BUSY</code>、<code>PAD</code>，表示空闲、已使用或者作为padding。</li>
+<li><code>dirty</code>：仅在<code>state == FREE</code>时有效，表示内存中的内容不是全部置零的。<code>dirty</code>被置位的情况只会发生在使用<code>--huge-unlink=never</code>命令行参数的时候。</li>
+<li><code>pad</code>：保存了padding的长度。</li>
+<li><code>size</code>：包含header在内的数据块总长度。</li>
+</ul>
+<blockquote>
+<p>当<code>hugetlbfs</code>中的文件或文件的一部分首次在全系统范围映射时，内核会清空其中的数据，以防止数据泄露。EAL会在启动时删除现有后备文件（backing
+file）并重新创建，然后再进行映射，以保证数据被清空。</p>
+<p>清空内存占了大页映射总耗时的95%以上，因此可以使用<code>--huge-unlink=never</code>让EAL直接使用现有的后备文件以及其中的数据，从而跳过清空内存的过程。通常<code>--huge-unlink=never</code>用于加快应用重启的速度。</p>
+</blockquote>
+<p>当<code>malloc_heap</code>中没有足够的空间满足分配请求时，EAL会像系统申请更多内存。任何申请新页的请求都必须经过主进程。如果主进程不活跃，那么无法申请任何新内存。主进程负责决定什么应该被映射、什么不应该被映射。每个次进程都有自己的本地内存映射，但它们不能修改这些映射，只能从主进程拷贝内存映射到本地内存映射。</p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -222,7 +400,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2023-08-02 01:31:09" itemprop="dateModified" datetime="2023-08-02T01:31:09+00:00">2023-08-02</time>
+      <time title="修改时间：2023-08-08 06:15:34" itemprop="dateModified" datetime="2023-08-08T06:15:34+00:00">2023-08-08</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -668,7 +846,7 @@ style="text-align: left;"><code>SHF_ALLOC | SHF_EXECINSTR</code></td>
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2023-08-02 01:31:09" itemprop="dateModified" datetime="2023-08-02T01:31:09+00:00">2023-08-02</time>
+      <time title="修改时间：2023-08-08 06:15:34" itemprop="dateModified" datetime="2023-08-08T06:15:34+00:00">2023-08-08</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -815,7 +993,7 @@ page），但是这也是可配置的。</p>
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2023-08-02 01:31:09" itemprop="dateModified" datetime="2023-08-02T01:31:09+00:00">2023-08-02</time>
+      <time title="修改时间：2023-08-08 06:15:34" itemprop="dateModified" datetime="2023-08-08T06:15:34+00:00">2023-08-08</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -908,7 +1086,7 @@ page），但是这也是可配置的。</p>
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2023-08-02 01:31:09" itemprop="dateModified" datetime="2023-08-02T01:31:09+00:00">2023-08-02</time>
+      <time title="修改时间：2023-08-08 06:15:34" itemprop="dateModified" datetime="2023-08-08T06:15:34+00:00">2023-08-08</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
