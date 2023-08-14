@@ -2,10 +2,12 @@
 title: DPDK Programmer's Guide笔记
 date: 2023-08-04 16:49:12
 categories: DPDK
-tags: [DPDK,Linux]
+tags: [DPDK,Linux,ARM]
 ---
 
 > 本文基于DPDK 22.11.2。
+>
+> 本文基于ARM架构。
 
 ## Environment Abstraction Layer
 
@@ -642,3 +644,31 @@ __rte_ring_move_cons_head(struct rte_ring *r, unsigned int is_sc,
 可以注意到，上文中的代码在修改`tail`会等待`ring->(prod|cons).head`等于本地的`head`，在等待过程中不断spin。RTS模式可以不进行这种等待，而可以直接修改`tail`指针到更新的值。这可以在过载的系统（overcommitted system）中提升出入队的性能。
 
 HTS模式中，出队和入队的操作是完全串行的，同一时刻只能有一个生产者和消费者执行入队和出队操作。在这种模式和单生产者单消费者模式下，`ring`还提供了`peek`的API。
+
+## Mempool Library
+
+> DIMM（Dual In-line Memory Module）是双列直插式内存模块，就是通常所说的“内存条”，双列指的是正反两面的“金手指”是不同的电路，而单列的内存条正反面的金手指是直接相连的相同的冗余电路。直插应该说的是直接怼进去的安装方式吧。SO-DIMM（Small Outline DIMM）是小外形DIMM，就是部分笔记本电脑上用的可以插拔的内存条，比台式机内存条更小一些。DIMM说的是物理外形，与内存条具体是DDR几代等各种参数都无直接关系。
+>
+> CS（Chip Select）是数字电路设计时常用的一种控制信号，可以从多个集成电路（通常称为chip）中选择一个或一组。一条DIMM上一般都有许多DRAM芯片，而能被同一个CS信号选择出的一组DRAM芯片被称为一个rank。一般来说，一条DIMM有两个rank，正面一个，反面一个，但是这只是惯例，也可以不这样。大多数DIMM上的所有DRAM芯片共享控制信号和数据针脚，但不共享CS信号。因此，同一条DIMM上的多个rank是无法同时被访问的。
+>
+> 以DDR4为例，每个rank数据位宽是64位。如果每个rank有8个芯片，那么每个芯片的位宽就是8位。如果每个rank只有4个芯片，那么每个芯片的位宽就是16位。芯片中有多个bank，每个bank都是一个二维矩阵，矩阵的每个位置都保存着数据，一般是4位、8位或16位，与芯片的位宽相同。每次访问时，都会选择一个rank，然后到每个芯片中找到同一个bank（同一个指的是索引值）的同一行的同一个cell，读出数据，然后把来自所有芯片的数据拼起来，得到64位数据。内存一般还有burst读取的特性，即读取某个地址时，可以一次性读取从这个地址开始的数个cell中的数据。
+
+![内存排布](DPDK-Programmer-s-Guide笔记/memory-management.svg)
+
+如上图所示，是一个2 channel、4 rank的例子。随着内存地址的增长，实际对应的物理位置是按先rank后channel的顺序遍历的，即channel 0的rank 0、channel 1的rank 0、channel 1的rank 0、channel 1的rank 1等等。
+
+当主要任务是L3转发或者流量分类时，只需要读取每个包的前64字节数据。因此如果适当进行padding，使包的起始位置位于不同的channel和rank，就能显著提升（greatly improved）性能表现。
+
+![内存池](DPDK-Programmer-s-Guide笔记/mempool.svg)
+
+默认`mempool`的底层实现是`ring`。当多个核心访问内存池的空闲区时，由于需要大量原子CAS操作，可能导致性能下降。因此，内存池分配器为每个核心维护了一个cache。每个核心都能完全访问自己cache中的对象（带锁），当cache的空间不足或多余时，cache才会与内存池间交互，从内存池获取内存或将内存放回内存池。
+
+## Mbuf Library
+
+`mbuf`提供了分配和释放缓冲区的能力，一般用作网络包缓存，但也可以用于存放任意数据。`mbuf`的底层实现使用了`mempool`。`rte_mbuf`结构体的header保持尽可能地小，当前的大小是两个cache line，并且最常用的数据放在第一个cache line中。
+
+![示意图](DPDK-Programmer-s-Guide笔记/mbuf1.svg)
+
+![示意图](DPDK-Programmer-s-Guide笔记/mbuf2.svg)
+
+有两种方法来存储包数据（包括协议头），一是将元数据和包数据放在一起，二是将二者分别放在不同的buffer中。第一种方法的优点是只需一次内存分配和释放操作，第二种方法则更加灵活。DPDK使用了第一种方法，元数据中包含控制信息（消息类型、包文长度、偏移量等）和一个附加的`mbuf`结构体的指针。当数据包需要占用多个buffer时，可通过`mbuf`结构体中的指针将其连接起来。
