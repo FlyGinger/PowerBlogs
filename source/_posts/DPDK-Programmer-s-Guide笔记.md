@@ -1,7 +1,7 @@
 ---
 title: DPDK Programmer's Guide笔记
 date: 2023-08-04 16:49:12
-categories: DPDK
+categories: 学习笔记
 tags: [DPDK,Linux,ARM]
 ---
 
